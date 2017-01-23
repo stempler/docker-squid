@@ -38,8 +38,18 @@ if [[ -z ${1} ]]; then
     echo "Initializing cache..."
     $(which squid3) -N -f /etc/squid3/squid.conf -z
   fi
+
+  LOGFIFO='/var/log/squid3/access.fifo'
+  if [[ ! -e "$LOGFIFO" ]]; then
+    mkfifo "$LOGFIFO"
+    chown proxy:proxy "$LOGFIFO"
+  fi
+
   echo "Starting squid3..."
-  exec $(which squid3) -f /etc/squid3/squid.conf -NYCd 1 ${EXTRA_ARGS}
+  $(which squid3) -f /etc/squid3/squid.conf -YCd 1 ${EXTRA_ARGS}
+
+  echo "Viewing access log..."
+  tail -n +0 -f "$LOGFIFO"
 else
   exec "$@"
 fi
